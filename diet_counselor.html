@@ -1,1 +1,775 @@
-index.html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ダイエットコーチ 食事指導</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: #e5ddd5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+  z-index: 10;
+}
+.header-icon {
+  width: 44px; height: 44px;
+  background: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.header-info { flex: 1; }
+.header-name { font-size: 16px; font-weight: bold; }
+.header-status { font-size: 12px; opacity: 0.85; margin-top: 1px; }
+
+/* Quick chips */
+.quick-chips {
+  background: #f0f0f0;
+  padding: 8px 12px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.quick-chips::-webkit-scrollbar { display: none; }
+.chip {
+  background: white;
+  border: 1px solid #4CAF50;
+  color: #2e7d32;
+  border-radius: 16px;
+  padding: 5px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.chip:hover { background: #4CAF50; color: white; }
+
+/* Chat area */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Messages */
+.msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+.msg-row.user { flex-direction: row-reverse; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.msg-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+.msg-bubble {
+  max-width: 72%;
+  padding: 10px 13px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+  position: relative;
+}
+.msg-row:not(.user) .msg-bubble {
+  background: white;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.msg-row.user .msg-bubble {
+  background: #dcf8c6;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.msg-time {
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 2px;
+  flex-shrink: 0;
+}
+.msg-row.user .msg-time { text-align: right; }
+
+.msg-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: block;
+}
+.msg-images { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.typing-dots {
+  background: white;
+  border-radius: 18px;
+  padding: 12px 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.typing-dot {
+  width: 7px; height: 7px;
+  background: #999;
+  border-radius: 50%;
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* Photo preview */
+.photo-preview-area {
+  display: none;
+  padding: 8px 12px;
+  background: #f8f8f8;
+  border-top: 1px solid #ddd;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.photo-preview-area.active { display: flex; }
+.photo-thumb-wrap {
+  position: relative;
+  display: inline-block;
+}
+.photo-thumb {
+  width: 60px; height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+.photo-remove {
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 18px; height: 18px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  font-weight: bold;
+}
+
+/* Input area */
+.input-area {
+  background: #f0f0f0;
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  border-top: 1px solid #ddd;
+}
+.input-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.input-btn:hover { transform: scale(1.1); }
+.photo-btn { background: #4CAF50; color: white; }
+.send-btn { background: #4CAF50; color: white; }
+.send-btn:disabled { background: #bbb; cursor: not-allowed; transform: none; }
+
+.text-input {
+  flex: 1;
+  padding: 10px 13px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  max-height: 120px;
+  line-height: 1.4;
+  background: white;
+}
+
+/* Template modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h3 { font-size: 16px; color: #2e7d32; margin-bottom: 4px; }
+.modal-subtitle { font-size: 12px; color: #888; margin-bottom: 14px; }
+.template-section {
+  background: #f5f5f5;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+.template-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #eaf5ea;
+  border-bottom: 1px solid #ddd;
+}
+.template-section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #2e7d32;
+}
+.copy-section-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.copy-section-btn:hover { background: #2e7d32; }
+.copy-section-btn.copied { background: #888; }
+.template-section pre {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  white-space: pre-wrap;
+  line-height: 1.8;
+  color: #333;
+  margin: 0;
+}
+.modal-close-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  background: #eee;
+  color: #333;
+}
+
+/* Image lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: 95%; max-height: 90vh; border-radius: 8px; }
+.lightbox-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-icon">🥗</div>
+  <div class="header-info">
+    <div class="header-name">ダイエットコーチ</div>
+    <div class="header-status">食事指導AIアシスタント ✨</div>
+  </div>
+</div>
+
+<!-- Quick chips -->
+<div class="quick-chips">
+  <div class="chip" onclick="sendChip('📋 食事報告テンプレートを見せてください')">📋 報告テンプレ</div>
+  <div class="chip" onclick="sendChip('体質チェックをしてください')">🔍 体質チェック</div>
+  <div class="chip" onclick="sendChip('便秘を改善したい')">💚 便秘改善</div>
+  <div class="chip" onclick="sendChip('むくみを解消したい')">💧 むくみ解消</div>
+  <div class="chip" onclick="sendChip('冷えを改善したい')">🔥 冷え改善</div>
+  <div class="chip" onclick="sendChip('7日間ダイエット習慣を教えてください')">📅 7日間習慣</div>
+  <div class="chip" onclick="sendChip('外食でも太らない方法を教えてください')">🍱 外食攻略</div>
+  <div class="chip" onclick="sendChip('お酒を飲みながら痩せる方法を教えてください')">🍺 お酒と痩せ</div>
+</div>
+
+<!-- Chat area -->
+<div class="chat-area" id="chatArea">
+  <div class="msg-row">
+    <div class="msg-avatar">🥗</div>
+    <div>
+      <div class="msg-time">ダイエットコーチ</div>
+      <div class="msg-bubble">こんにちは😊 ダイエットコーチです！
+
+食事の写真や今日の食事内容を送ってください🌿
+一緒に体質に合った食べ方で、しっかり痩せていきましょう💪
+
+上のボタンから「📋 報告テンプレ」を選ぶと、食事報告の書き方が見られますよ！
+
+何でも気軽に相談してくださいね✨</div>
+    </div>
+  </div>
+</div>
+
+<!-- Photo preview -->
+<div class="photo-preview-area" id="photoPreviewArea"></div>
+
+<!-- Input area -->
+<div class="input-area">
+  <button class="input-btn photo-btn" onclick="document.getElementById('photoInput').click()" title="写真を送る">📷</button>
+  <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handlePhotos(this)">
+  <textarea class="text-input" id="textInput" placeholder="メッセージを入力..." rows="1"
+    oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+  <button class="input-btn send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+</div>
+
+<!-- Template Modal -->
+<div class="modal-overlay" id="templateModal">
+  <div class="modal">
+    <h3>📋 食事報告テンプレート</h3>
+    <p class="modal-subtitle">項目ごとにコピーして送ってください😊</p>
+
+    <!-- 1. 数値 -->
+    <div class="template-section">
+      <div class="template-section-header">
+        <span class="template-section-title">1️⃣ 数値（朝一番に計測）</span>
+        <button class="copy-section-btn" onclick="copySection(this, 'tpl-numbers')">📋 コピー</button>
+      </div>
+      <pre id="tpl-numbers">1. 数値（朝一番に計測）
+・体重：    kg
+・体脂肪率：   %</pre>
+    </div>
+
+    <!-- 2. 食事内容 -->
+    <div class="template-section">
+      <div class="template-section-header">
+        <span class="template-section-title">2️⃣ 食事内容</span>
+        <button class="copy-section-btn" onclick="copySection(this, 'tpl-meals')">📋 コピー</button>
+      </div>
+      <pre id="tpl-meals">2. 食事内容（写真は全食まとめて夜でも、毎食でもOK!）
+・朝（  ：  ）：
+・昼（  ：  ）：
+・夕（  ：  ）：
+・間食：</pre>
+    </div>
+
+    <!-- 3. 体調 -->
+    <div class="template-section">
+      <div class="template-section-header">
+        <span class="template-section-title">3️⃣ 体調・振り返り</span>
+        <button class="copy-section-btn" onclick="copySection(this, 'tpl-condition')">📋 コピー</button>
+      </div>
+      <pre id="tpl-condition">3. 体調・振り返り
+・お通じ：  回（硬い / 普通 / 軟らかい）
+・水分：   L
+・空腹感（食事1時間前）：
+　　昼（あり○ / なし×）　夜（あり○ / なし×）
+・今日の一言：</pre>
+    </div>
+
+    <button class="modal-close-btn" onclick="closeModal()">閉じる</button>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+// Set your Anthropic API key here
+const API_KEY = 'YOUR_API_KEY_HERE';
+
+const SYSTEM_PROMPT = `あなたは経験豊富なダイエットコーチです。
+東洋医学×食べ痩せの専門家として、生徒さんの食事報告に対してLINEスタイルで返信します。
+
+【返信の必須構成】
+①名前がわかれば「◯◯さん、こんにちは😊」で始める
+②【🌟昨日の全体バランス評価】として以下を◎○△×で評価（総まとめ）：
+　主食：評価（一言コメント）
+　タンパク質：評価（一言コメント）
+　食物繊維：評価（一言コメント）
+　脂質：評価（一言コメント）
+　全体量：評価（一言コメント）
+③【朝食】【昼食】【夕食】ごとに短くコメント（良い点＋改善点）
+④具体的なアドバイス：代替食材・グラム数・タイミングを明示
+⑤締めの一言で前向きに終わる
+
+【指導の具体的ルール】
+・食材レベルで代替案を出す（例：ポテトコロッケ→脂質が多いので、ご飯100gやさつま芋、またはサラダに）
+・グラム数を明示する（例：ご飯は手の平2/3で約100g、春雨がある時はご飯を80gに）
+・糖質の重複を指摘（例：パンとコーン→糖質が2種類重なっているのでどちらかに）
+・外食翌日の調整を具体的に（例：翌日2〜3食は糖質カット。ご飯50g、蒟蒻麺、ベースフード活用）
+・お酒の飲み方アドバイス（例：ビールは糖質が高いので焼酎や糖質ゼロビールに）
+・飲み物を確認（例：コーヒー微糖→ブラックに変更すると糖質-5g）
+・間食の改善（例：アイスはハーゲンダッツより明治エッセルスーパーカップや糖質オフ製品に）
+・質問を交える（例：ご飯は何gになりましたか？お腹何分目でしたか？）
+・たんぱく質が少ない時→プロテインやオイコス、ギリシャヨーグルト、卵1個を追加提案
+
+【体質別食材の知識】
+・便秘改善：わかめ・ごぼう・大根・オートミール・ヨーグルト・納豆・りんご・水1.5〜2L・白湯
+・むくみ解消：バナナ・アボカド・小松菜・ほうれん草・あずき・あさり・豆腐・塩分控えめ
+・冷え改善：生姜・ねぎ・にら・シナモン・根菜類（ごぼう・れんこん・にんじん）・黒豆・ナッツ
+・生理不順：鉄分（ほうれん草・レバー・あさり）・亜鉛（牡蠣・牛肉）・葉酸（ブロッコリー・枝豆）
+・不眠：トリプトファン（バナナ・豆乳・チーズ）・マグネシウム（ナッツ・わかめ）
+
+【7DAYS習慣プログラム】
+月：白湯（朝の1杯、内臓を温める）
+火：わかめ味噌汁（食物繊維・ミネラル補給）
+水：納豆（腸活・良質たんぱく質）
+木：たんぱく質強化（毎食20g以上を目標）
+金：トマトジュース（リコピン・抗酸化）
+土：ナッツ間食（素焼きアーモンド20粒程度）
+日：お米しっかり（糖質を怖がらず100gで代謝UP）
+
+【食べ痩せ攻略 食材50選の知識】
+・主食：玄米・オートミール・ベースフード・全粒粉パン（GI低め）
+・たんぱく質：鶏むね肉・サーモン・卵・豆腐・納豆・オイコス・プロテイン
+・野菜：ブロッコリー・小松菜・きのこ類・海藻類（カロリー低く食物繊維豊富）
+・脂質：アボカド・ナッツ・えごま油・オリーブオイル（良質な脂質）
+・避けるもの：揚げ物・白い炭水化物・砂糖入り飲料・マーガリン
+
+【40代の食べ痩せポイント】
+・代謝を上げるためご飯は怖がらず1食80〜100g
+・たんぱく質は毎食20g以上（体重×1.2〜1.5gが目標）
+・夕食は就寝3時間前までに
+・ながら食い・まとめ食いをやめる
+
+【文体ルール】
+・絵文字を自然に使う（😊🔥💪✨👍🌿🍀）
+・1〜2文で短くテンポよく
+・褒める→具体的な改善提案の順
+・責めない・前向きなトーンで
+・「◎でかなり優秀👏」「○でバッチリ🔥」「△なので〜してみましょう😊」「×は要注意⚠️」
+
+写真が送られた場合は、見えている食事内容から推測して指導してください。
+写真だけの場合でも食材を読み取ってコメントし、見えないものは「写真から確認できない分は〜があると◎です」と補足してください。`;
+
+let pendingPhotos = [];
+let conversation = [];
+let isLoading = false;
+
+function getTime() {
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function scrollToBottom() {
+  const area = document.getElementById('chatArea');
+  area.scrollTop = area.scrollHeight;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function handlePhotos(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingPhotos.push({ dataUrl: e.target.result, name: file.name });
+      renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function renderPhotoPreview() {
+  const area = document.getElementById('photoPreviewArea');
+  area.innerHTML = '';
+  if (pendingPhotos.length === 0) {
+    area.classList.remove('active');
+    return;
+  }
+  area.classList.add('active');
+  pendingPhotos.forEach((p, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-thumb-wrap';
+    const img = document.createElement('img');
+    img.className = 'photo-thumb';
+    img.src = p.dataUrl;
+    const btn = document.createElement('button');
+    btn.className = 'photo-remove';
+    btn.innerHTML = '✕';
+    btn.onclick = () => { pendingPhotos.splice(i, 1); renderPhotoPreview(); };
+    wrap.appendChild(img);
+    wrap.appendChild(btn);
+    area.appendChild(wrap);
+  });
+}
+
+function addMessage(role, text, images) {
+  const area = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = `msg-row${role === 'user' ? ' user' : ''}`;
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = getTime();
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+
+  if (images && images.length > 0) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'msg-images';
+    images.forEach(src => {
+      const img = document.createElement('img');
+      img.className = 'msg-img';
+      img.src = src;
+      img.onclick = () => openLightbox(src);
+      imgWrap.appendChild(img);
+    });
+    bubble.appendChild(imgWrap);
+    if (text) {
+      const textEl = document.createElement('div');
+      textEl.style.marginTop = '6px';
+      textEl.textContent = text;
+      bubble.appendChild(textEl);
+    }
+  } else {
+    bubble.textContent = text;
+  }
+
+  const inner = document.createElement('div');
+
+  if (role === 'user') {
+    inner.appendChild(timeEl);
+    inner.appendChild(bubble);
+    row.appendChild(inner);
+  } else {
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = '🥗';
+    inner.appendChild(timeEl);
+    inner.appendChild(bubble);
+    row.appendChild(avatar);
+    row.appendChild(inner);
+  }
+
+  area.appendChild(row);
+  scrollToBottom();
+}
+
+function addTyping() {
+  const area = document.getElementById('chatArea');
+  const row = document.createElement('div');
+  row.className = 'typing-indicator';
+  row.id = 'typingIndicator';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'msg-avatar';
+  avatar.textContent = '🥗';
+
+  const dots = document.createElement('div');
+  dots.className = 'typing-dots';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 'typing-dot';
+    dots.appendChild(d);
+  }
+
+  row.appendChild(avatar);
+  row.appendChild(dots);
+  area.appendChild(row);
+  scrollToBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('textInput');
+  const text = input.value.trim();
+  if (!text && pendingPhotos.length === 0) return;
+
+  // Handle template request
+  if (text === '📋 食事報告テンプレートを見せてください') {
+    addMessage('user', text);
+    input.value = '';
+    autoResize(input);
+    document.getElementById('templateModal').classList.add('active');
+    return;
+  }
+
+  // Build user message
+  const photos = [...pendingPhotos];
+  pendingPhotos = [];
+  renderPhotoPreview();
+
+  const imageUrls = photos.map(p => p.dataUrl);
+  addMessage('user', text, imageUrls);
+  input.value = '';
+  autoResize(input);
+
+  // Build API content
+  const userContent = [];
+  if (photos.length > 0) {
+    photos.forEach(p => {
+      const [, mediaType, data] = p.dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      userContent.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data } });
+    });
+  }
+  if (text) {
+    userContent.push({ type: 'text', text });
+  }
+
+  conversation.push({ role: 'user', content: userContent });
+
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  addTyping();
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: conversation
+      })
+    });
+
+    const data = await resp.json();
+    removeTyping();
+
+    if (!resp.ok) {
+      const errMsg = data.error?.message || `エラー: ${resp.status}`;
+      addMessage('assistant', `⚠️ ${errMsg}`);
+    } else {
+      const reply = data.content?.find(b => b.type === 'text')?.text || 'すみません、うまく返信できませんでした😢';
+      conversation.push({ role: 'assistant', content: reply });
+      addMessage('assistant', reply);
+    }
+  } catch (e) {
+    removeTyping();
+    addMessage('assistant', '通信エラーが発生しました😢 もう一度お試しください。');
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  scrollToBottom();
+}
+
+function sendChip(text) {
+  if (isLoading) return;
+  if (text === '📋 食事報告テンプレートを見せてください') {
+    document.getElementById('templateModal').classList.add('active');
+    return;
+  }
+  document.getElementById('textInput').value = text;
+  sendMessage();
+}
+
+function copySection(btn, id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ コピー済み';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 コピー'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function closeModal() {
+  document.getElementById('templateModal').classList.remove('active');
+}
+
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('active');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+</script>
+
+</body>
+</html>
